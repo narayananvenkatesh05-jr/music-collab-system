@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}AI Music Generator{% endblock %}
+{% block topbar_title %}AI Music Generator{% endblock %}
+
+{% block content %}
+
+<!-- Hero banner -->
+<div style="background:linear-gradient(135deg,#0d1117 0%,#1a1030 50%,#0d1117 100%);border-radius:20px;padding:40px;margin-bottom:32px;position:relative;overflow:hidden;border:1px solid rgba(108,99,255,0.2)">
+  <div style="position:absolute;top:-50px;right:-50px;width:300px;height:300px;background:radial-gradient(circle,rgba(108,99,255,0.15),transparent 70%);pointer-events:none"></div>
+  <div style="position:relative;z-index:1">
+    <div style="font-size:48px;margin-bottom:16px">🤖</div>
+    <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.5px">
+      AI Music Generator
+    </div>
+    <div style="color:rgba(255,255,255,0.6);font-size:16px;max-width:500px;line-height:1.6">
+      Describe any music in words — Tamil folk, Hindi romantic, Electronic beats —
+      and AI will generate it for you instantly. Powered by Meta's MusicGen.
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px">
+  {% for step, icon, desc in [
+    ('1','✍️','Type your music description'),
+    ('2','🔑','Enter your free Hugging Face API key'),
+    ('3','🤖','AI generates your music in seconds'),
+    ('4','💾','Save directly to your project')
+  ] %}
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center">
+    <div style="font-size:28px;margin-bottom:8px">{{ icon }}</div>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Step {{ step }}</div>
+    <div style="font-size:13px;color:var(--text-secondary)">{{ desc }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Main generator card -->
+<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+
+  <!-- Left: Generator form -->
+  <div class="card fade-in">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🎵 Generate Music</div>
+        <div class="card-subtitle">Describe the music you want to create</div>
+      </div>
+    </div>
+
+    <!-- Prompt input -->
+    <div class="form-group">
+      <label class="form-label">Music Description *</label>
+      <textarea class="form-control" id="music-prompt" rows="4"
+                placeholder="Example: Tamil folk song with veena and mridangam, peaceful and melodic&#10;Or: Hindi romantic ballad with piano and violin&#10;Or: Electronic dance beat with heavy bass drop"></textarea>
+      <div class="form-hint">Be specific — mention genre, instruments, mood, language</div>
+    </div>
+
+    <!-- Prompt suggestions -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Quick Prompts — Click to use:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="prompt-suggestions">
+        {% for prompt in [
+          'Tamil folk song with veena and mridangam',
+          'Hindi romantic ballad with piano',
+          'Punjabi bhangra beat with dhol',
+          'Carnatic classical music with flute',
+          'Electronic dance music with heavy bass',
+          'Soft lo-fi hip hop beats',
+          'Jazz piano with smooth saxophone',
+          'Epic orchestral cinematic music',
+          'Bollywood pop song upbeat',
+          'Peaceful meditation music'
+        ] %}
+        <button type="button"
+                onclick="document.getElementById('music-prompt').value='{{ prompt }}'"
+                style="padding:6px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-secondary);font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.15s"
+                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+          {{ prompt }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- API Key input -->
+    <div class="form-group">
+      <label class="form-label">
+        Hugging Face API Token *
+        <a href="https://huggingface.co/settings/tokens" target="_blank"
+           style="color:var(--accent);font-size:12px;margin-left:8px;font-weight:400">
+          Get free token →
+        </a>
+      </label>
+      <input class="form-control" type="password" id="hf-token"
+             placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxx"
+             value="{{ request.cookies.get('hf_token', '') }}"/>
+      <div class="form-hint">
+        Free account at huggingface.co → Settings → Access Tokens → New Token
+      </div>
+    </div>
+
+    <!-- Project selector -->
+    <div class="form-group">
+      <label class="form-label">Save to Project</label>
+      <select class="form-control" id="save-project">
+        <option value="">Don't save — just preview</option>
+        {% for p in projects %}
+        <option value="{{ p.project_id }}">{{ p.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Generate button -->
+    <button id="generate-btn" onclick="generateMusic()"
+            class="btn btn-primary btn-full"
+            style="border-radius:99px;padding:14px;font-size:16px">
+      🤖 Generate Music with AI
+    </button>
+
+    <!-- Status area -->
+    <div id="gen-status" style="display:none;margin-top:20px;padding:16px;border-radius:12px;background:var(--bg-elevated);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="gen-spinner" style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite"></div>
+        <div id="gen-status-text" style="font-size:14px;color:var(--text-secondary)">
+          Generating your music... this takes 20-40 seconds
+        </div>
+      </div>
+    </div>
+
+    <!-- Result area -->
+    <div id="gen-result" style="display:none;margin-top:20px">
+      <div style="padding:20px;background:rgba(67,233,123,0.08);border:1px solid rgba(67,233,123,0.25);border-radius:12px">
+        <div style="font-weight:600;color:#43e97b;margin-bottom:12px;font-size:15px">
+          ✅ Music Generated Successfully!
+        </div>
+        <audio id="gen-audio" controls style="width:100%;margin-bottom:12px;border-radius:8px"></audio>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a id="gen-download" download="ai-music.wav"
+             class="btn btn-outline btn-sm">⬇️ Download</a>
+          <button onclick="saveToProject()" id="save-btn"
+                  class="btn btn-primary btn-sm">💾 Save to Project</button>
+          <button onclick="generateMusic()"
+                  class="btn btn-ghost btn-sm">🔄 Regenerate</button>
+        </div>
+        <div id="save-status" style="margin-top:10px;font-size:13px;color:var(--accent)"></div>
+      </div>
+    </div>
+
+    <!-- Error area -->
+    <div id="gen-error" style="display:none;margin-top:20px"></div>
+  </div>
+
+  <!-- Right: Info panel -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- What AI can generate -->
+    <div class="card fade-in">
+      <div style="font-weight:700;margin-bottom:16px;font-size:15px">🎵 What AI Can Generate</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% for category, examples in [
+          ('Indian Classical', ['Carnatic ragas', 'Hindustani classical', 'Veena melodies', 'Tabla beats']),
+          ('Bollywood', ['Romantic ballads', 'Upbeat dance songs', 'Background scores']),
+          ('Regional', ['Tamil folk', 'Punjabi bhangra', 'Bengali baul', 'Rajasthani folk']),
+          ('Global', ['Electronic', 'Jazz', 'Lo-fi', 'Orchestral', 'Pop'])
+        ] %}
+        <div style="padding:12px;background:var(--bg-elevated);border-radius:10px;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--accent)">{{ category }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            {% for ex in examples %}
+            <span style="font-size:11px;background:var(--bg-card);padding:2px 8px;border-radius:99px;color:var(--text-muted)">{{ ex }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Tips card -->
+    <div class="card fade-in fade-in-delay-1" style="background:var(--accent-soft);border-color:var(--border-hover)">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:12px">💡 Tips for Better Results</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-secondary)">
+        <div>✓ Mention specific instruments (veena, tabla, piano)</div>
+        <div>✓ Describe the mood (peaceful, energetic, romantic)</div>
+        <div>✓ Add tempo (slow, medium, fast, upbeat)</div>
+        <div>✓ Specify the style (classical, folk, modern, fusion)</div>
+        <div>✓ Keep description under 200 characters</div>
+      </div>
+    </div>
+
+    <!-- Alternative tools -->
+    <div class="card fade-in fade-in-delay-2">
+      <div style="font-weight:700;margin-bottom:14px;font-size:15px">🌐 Also Try These Free AI Tools</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% for name, url, desc, badge in [
+          ('Suno AI','https://suno.com','Full songs with vocals — best quality','⭐ Best'),
+          ('Udio','https://udio.com','High quality AI music generation','🔥 Popular'),
+          ('Mubert','https://mubert.com','AI background music generator','🎧 Free'),
+          ('Pixabay Music','https://pixabay.com/music','Free copyright-free music library','✅ Legal')
+        ] %}
+        <a href="{{ url }}" target="_blank"
+           style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-elevated);border-radius:10px;border:1px solid var(--border);text-decoration:none;transition:border-color 0.15s"
+           onmouseover="this.style.borderColor='var(--accent)'"
+           onmouseout="this.style.borderColor='var(--border)'">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary)">{{ name }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ desc }}</div>
+          </div>
+          <span class="badge badge-purple">{{ badge }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let generatedAudioUrl = null;
+
+async function generateMusic() {
+  const prompt     = document.getElementById('music-prompt').value.trim();
+  const hfToken    = document.getElementById('hf-token').value.trim();
+  const projectId  = document.getElementById('save-project').value;
+
+  if (!prompt) {
+    showError('Please enter a music description!');
+    return;
+  }
+  if (!hfToken) {
+    showError('Please enter your Hugging Face API token! <a href="https://huggingface.co/settings/tokens" target="_blank" style="color:var(--accent)">Get it free here →</a>');
+    return;
+  }
+
+  // Show loading
+  document.getElementById('gen-status').style.display = 'block';
+  document.getElementById('gen-result').style.display = 'none';
+  document.getElementById('gen-error').style.display  = 'none';
+  document.getElementById('generate-btn').disabled = true;
+  document.getElementById('generate-btn').textContent = '⏳ Generating...';
+
+  const messages = [
+    'Connecting to AI model...',
+    'Loading MusicGen model (first time takes longer)...',
+    'Analyzing your music description...',
+    'Composing instruments and melody...',
+    'Almost done — finalizing audio...'
+  ];
+
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    if (msgIdx < messages.length) {
+      document.getElementById('gen-status-text').textContent = messages[msgIdx++];
+    }
+  }, 6000);
+
+  try {
+    // Call Hugging Face API directly from browser
+    const response = await fetch(
+      'https://api-inference.huggingface.co/models/facebook/musicgen-small',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${hfToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: prompt })
+      }
+    );
+
+    clearInterval(msgInterval);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      if (errText.includes('loading')) {
+        showError('⏳ AI model is loading (this happens first time). Please wait 30 seconds and try again!');
+      } else if (errText.includes('401') || errText.includes('Unauthorized')) {
+        showError('❌ Invalid API token. Please check your Hugging Face token and try again.');
+      } else {
+        showError(`AI Error: ${errText.substring(0, 200)}`);
+      }
+      return;
+    }
+
+    // Get audio blob
+    const audioBlob = await response.blob();
+    generatedAudioUrl = URL.createObjectURL(audioBlob);
+
+    // Show result
+    const audioEl = document.getElementById('gen-audio');
+    audioEl.src = generatedAudioUrl;
+    document.getElementById('gen-download').href = generatedAudioUrl;
+
+    // Store blob for saving
+    window._generatedBlob  = audioBlob;
+    window._generatedPrompt = prompt;
+    window._generatedToken = hfToken;
+
+    document.getElementById('gen-result').style.display = 'block';
+    document.getElementById('gen-status').style.display = 'none';
+
+    // Save cookie for convenience
+    document.cookie = `hf_token=${hfToken};path=/;max-age=86400`;
+
+  } catch (err) {
+    clearInterval(msgInterval);
+    showError(`Connection error: ${err.message}. Check your internet connection.`);
+  } finally {
+    document.getElementById('generate-btn').disabled = false;
+    document.getElementById('generate-btn').textContent = '🤖 Generate Music with AI';
+    document.getElementById('gen-status').style.display = 'none';
+  }
+}
+
+async function saveToProject() {
+  const projectId = document.getElementById('save-project').value;
+  const prompt    = window._generatedPrompt || 'AI Generated';
+  const token     = window._generatedToken  || '';
+
+  if (!projectId) {
+    document.getElementById('save-status').textContent = '⚠️ Please select a project first!';
+    return;
+  }
+
+  if (!window._generatedBlob) {
+    document.getElementById('save-status').textContent = '⚠️ No generated audio to save!';
+    return;
+  }
+
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('save-btn').textContent = 'Saving...';
+
+  try {
+    const formData = new FormData();
+    formData.append('track_file', window._generatedBlob, 'ai-generated.wav');
+    formData.append('project_id', projectId);
+    formData.append('track_type', 'OTHER');
+    formData.append('duration', '0');
+
+    const response = await fetch('/tracks/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.redirected || response.ok) {
+      document.getElementById('save-status').innerHTML =
+        '✅ Saved to project! <a href="/projects/' + projectId + '" style="color:var(--accent)">View project →</a>';
+    } else {
+      document.getElementById('save-status').textContent = '❌ Error saving. Try uploading manually.';
+    }
+  } catch (err) {
+    document.getElementById('save-status').textContent = `Error: ${err.message}`;
+  } finally {
+    document.getElementById('save-btn').disabled = false;
+    document.getElementById('save-btn').textContent = '💾 Save to Project';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('gen-error').style.display = 'block';
+  document.getElementById('gen-error').innerHTML = `
+    <div class="alert alert-danger">❌ ${msg}</div>`;
+  document.getElementById('gen-status').style.display = 'none';
+}
+</script>
+{% endblock %}
+
+
