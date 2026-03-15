@@ -26,95 +26,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 mysql = MySQL(app)
 
-def init_db():
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute("""CREATE TABLE IF NOT EXISTS Users (
-            user_id INT NOT NULL AUTO_INCREMENT,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(150) NOT NULL UNIQUE,
-            password VARCHAR(255) NOT NULL,
-            role ENUM('SINGER','PRODUCER','LISTENER','ADMIN') NOT NULL DEFAULT 'LISTENER',
-            bio TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id)) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Project (
-            project_id INT NOT NULL AUTO_INCREMENT,
-            title VARCHAR(200) NOT NULL,
-            genre VARCHAR(100),
-            description TEXT,
-            status ENUM('ACTIVE','COMPLETED','ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
-            created_by INT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (project_id),
-            CONSTRAINT fk_project_user FOREIGN KEY (created_by) REFERENCES Users(user_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Track (
-            track_id INT NOT NULL AUTO_INCREMENT,
-            project_id INT NOT NULL,
-            uploaded_by INT NOT NULL,
-            track_type ENUM('VOCALS','INSTRUMENTAL','BEAT','MIXED','OTHER') NOT NULL DEFAULT 'OTHER',
-            file_url VARCHAR(500) NOT NULL,
-            duration INT DEFAULT 0,
-            uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (track_id),
-            CONSTRAINT fk_track_project FOREIGN KEY (project_id) REFERENCES Project(project_id) ON DELETE CASCADE,
-            CONSTRAINT fk_track_user FOREIGN KEY (uploaded_by) REFERENCES Users(user_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Collaboration (
-            collaboration_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            project_id INT NOT NULL,
-            role_in_project VARCHAR(100),
-            joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (collaboration_id),
-            UNIQUE KEY uq_collab (user_id, project_id),
-            CONSTRAINT fk_collab_user FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_collab_project FOREIGN KEY (project_id) REFERENCES Project(project_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS File_Version (
-            version_id INT NOT NULL AUTO_INCREMENT,
-            track_id INT NOT NULL,
-            version_number INT NOT NULL DEFAULT 1,
-            name VARCHAR(200),
-            changes_description TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (version_id),
-            CONSTRAINT fk_fv_track FOREIGN KEY (track_id) REFERENCES Track(track_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Review (
-            review_id INT NOT NULL AUTO_INCREMENT,
-            project_id INT NOT NULL,
-            reviewer_id INT NOT NULL,
-            rating TINYINT NOT NULL,
-            feedback TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (review_id),
-            CONSTRAINT fk_review_project FOREIGN KEY (project_id) REFERENCES Project(project_id) ON DELETE CASCADE,
-            CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES Users(user_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Playlist (
-            playlist_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            name VARCHAR(200) NOT NULL,
-            description TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (playlist_id),
-            CONSTRAINT fk_playlist_user FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        cur.execute("""CREATE TABLE IF NOT EXISTS Playlist_Track (
-            playlist_id INT NOT NULL,
-            track_id INT NOT NULL,
-            added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (playlist_id, track_id),
-            CONSTRAINT fk_pt_playlist FOREIGN KEY (playlist_id) REFERENCES Playlist(playlist_id) ON DELETE CASCADE,
-            CONSTRAINT fk_pt_track FOREIGN KEY (track_id) REFERENCES Track(track_id) ON DELETE CASCADE
-            ) ENGINE=InnoDB""")
-        mysql.connection.commit()
-        cur.close()
-        print("Tables ready!")
-    except Exception as e:
-        print(f"DB init error: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTS
@@ -447,12 +358,6 @@ def api_search():
 def uploaded_file(filename):
     from flask import send_from_directory
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.before_request
-def before_first_request():
-    if not hasattr(app, '_db_initialized'):
-        init_db()
-        app._db_initialized = True
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
