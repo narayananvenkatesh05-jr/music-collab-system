@@ -164,6 +164,18 @@ def get_user(user_id):
     cur.close()
     return user
 
+def get_hf_token():
+    """Get HuggingFace token — tries multiple sources"""
+    # Try all possible variable names
+    for key in ['HF_TOKEN', 'hf_token', 'HUGGINGFACE_TOKEN', 'HF_API_TOKEN']:
+        token = os.environ.get(key, '').strip()
+        if token:
+            print(f"HF token found via key: {key}, length: {len(token)}")
+            return token
+    # Print all env vars for debugging (only names, not values)
+    print(f"HF token NOT found. Available env keys: {[k for k in os.environ.keys()]}")
+    return ''
+
 # ─────────────────────────────────────────────────────────────
 # Context processor
 # ─────────────────────────────────────────────────────────────
@@ -630,7 +642,7 @@ def ai_generate():
     return render_template('ai_generate.html', projects=projects)
 
 # ─────────────────────────────────────────────────────────────
-# AI Generate API — token from environment only (SECURE)
+# AI Generate API — secure server side token
 # ─────────────────────────────────────────────────────────────
 @app.route('/api/generate-music', methods=['POST'])
 @login_required
@@ -641,23 +653,42 @@ def generate_music_api():
     if not prompt:
         return jsonify({'error': 'Prompt is required'}), 400
 
-    # Token from Railway environment variable — never from user input
-    hf_token = os.environ.get('HF_TOKEN', '')
+    # Get token using helper that tries multiple env var names
+    hf_token = get_hf_token()
+
     if not hf_token:
-        return jsonify({'error': 'AI service not configured. Add HF_TOKEN to Railway variables.'}), 500
+        return jsonify({
+            'error': 'AI service not configured. Add HF_TOKEN to Railway variables.'
+        }), 500
 
     try:
         API_URL = "https://api-inference.huggingface.co/models/facebook/musicgen-small"
         headers = {"Authorization": f"Bearer {hf_token}"}
-        payload = {"inputs": prompt}
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 256
+            }
+        }
 
-        response = req.post(API_URL, headers=headers, json=payload, timeout=120)
+        print(f"Calling HuggingFace API with prompt: {prompt[:50]}")
+        response = req.post(
+            API_URL,
+            headers=headers,
+            json=payload,
+            timeout=120
+        )
+
+        print(f"HuggingFace response status: {response.status_code}")
 
         if response.status_code == 503:
             return jsonify({'error': 'MODEL_LOADING'}), 503
 
+        if response.status_code == 401:
+            return jsonify({'error': 'Invalid HuggingFace token. Please update HF_TOKEN in Railway variables.'}), 401
+
         if response.status_code != 200:
-            return jsonify({'error': response.text[:200]}), 400
+            return jsonify({'error': f'AI API error {response.status_code}: {response.text[:200]}'}), 400
 
         # Save audio file
         import uuid as uuid_lib
@@ -666,12 +697,17 @@ def generate_music_api():
         with open(filepath, 'wb') as f:
             f.write(response.content)
 
+        print(f"AI audio saved: {filename}, size: {len(response.content)} bytes")
+
         return jsonify({
             'success':  True,
             'file_url': f"/uploads/{filename}"
         })
 
+    except req.exceptions.Timeout:
+        return jsonify({'error': 'AI generation timed out. Please try again.'}), 504
     except Exception as e:
+        print(f"AI generation error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # ─────────────────────────────────────────────────────────────
@@ -746,5 +782,3 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
