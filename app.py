@@ -9,6 +9,8 @@ import uuid
 from datetime import datetime
 from functools import wraps
 
+import requests as http_requests
+
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash, jsonify)
 from flask_mysqldb import MySQL
@@ -30,12 +32,17 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 ALLOWED_EXTS  = {'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'}
-app.config['UPLOAD_FOLDER']         = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH']    = 50 * 1024 * 1024
+app.config['UPLOAD_FOLDER']      = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 mysql = MySQL(app)
+
+# ─────────────────────────────────────────────────────────────
+# HuggingFace token — replace with your actual token
+# ─────────────────────────────────────────────────────────────
+HF_TOKEN = os.environ.get('HF_TOKEN', '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')
 
 # ─────────────────────────────────────────────────────────────
 # DB Init
@@ -138,6 +145,7 @@ def init_db():
         mysql.connection.commit()
         cur.close()
         print("Tables ready!")
+        print(f"HF_TOKEN configured: {bool(HF_TOKEN and HF_TOKEN != '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')}")
     except Exception as e:
         print(f"DB init: {e}")
 
@@ -163,18 +171,6 @@ def get_user(user_id):
     user = cur.fetchone()
     cur.close()
     return user
-
-def get_hf_token():
-    """Get HuggingFace token — tries multiple sources"""
-    # Try all possible variable names
-    for key in ['HF_TOKEN', 'hf_token', 'HUGGINGFACE_TOKEN', 'HF_API_TOKEN']:
-        token = os.environ.get(key, '').strip()
-        if token:
-            print(f"HF token found via key: {key}, length: {len(token)}")
-            return token
-    # Print all env vars for debugging (only names, not values)
-    print(f"HF token NOT found. Available env keys: {[k for k in os.environ.keys()]}")
-    return ''
 
 # ─────────────────────────────────────────────────────────────
 # Context processor
@@ -415,7 +411,7 @@ def projects():
     genre  = request.args.get('genre', '').strip()
     cur    = mysql.connection.cursor()
 
-    query  = """
+    query = """
         SELECT p.*, u.name AS creator_name,
                (SELECT COUNT(*) FROM Track WHERE project_id = p.project_id) AS track_count,
                (SELECT AVG(rating) FROM Review WHERE project_id = p.project_id) AS avg_rating
@@ -642,76 +638,61 @@ def ai_generate():
     return render_template('ai_generate.html', projects=projects)
 
 # ─────────────────────────────────────────────────────────────
-# AI Generate API — secure server side token
+# AI Generate API
 # ─────────────────────────────────────────────────────────────
 @app.route('/api/generate-music', methods=['POST'])
 @login_required
 def generate_music_api():
-    import requests as req
-
     prompt = request.json.get('prompt', '').strip()
     if not prompt:
         return jsonify({'error': 'Prompt is required'}), 400
 
-    # Get token using helper that tries multiple env var names
-    hf_token = get_hf_token()
+    token = HF_TOKEN
+    if not token or token == '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':
+        return jsonify({'error': 'HF token not configured in app.py'}), 500
 
-    if not hf_token:
-        return jsonify({
-            'error': 'AI service not configured. Add HF_TOKEN to Railway variables.'
-        }), 500
+    print(f"Generating music for: {prompt[:50]}, token length: {len(token)}")
 
     try:
         API_URL = "https://api-inference.huggingface.co/models/facebook/musicgen-small"
-        headers = {"Authorization": f"Bearer {hf_token}"}
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": 256
-            }
-        }
+        headers = {"Authorization": f"Bearer {token}"}
+        payload = {"inputs": prompt}
 
-        print(f"Calling HuggingFace API with prompt: {prompt[:50]}")
-        response = req.post(
+        response = http_requests.post(
             API_URL,
             headers=headers,
             json=payload,
             timeout=120
         )
 
-        print(f"HuggingFace response status: {response.status_code}")
+        print(f"HF API response: {response.status_code}")
 
         if response.status_code == 503:
             return jsonify({'error': 'MODEL_LOADING'}), 503
 
         if response.status_code == 401:
-            return jsonify({'error': 'Invalid HuggingFace token. Please update HF_TOKEN in Railway variables.'}), 401
+            return jsonify({'error': 'Invalid token — please update HF_TOKEN in app.py'}), 401
 
         if response.status_code != 200:
-            return jsonify({'error': f'AI API error {response.status_code}: {response.text[:200]}'}), 400
+            return jsonify({'error': f'API error {response.status_code}: {response.text[:200]}'}), 400
 
-        # Save audio file
-        import uuid as uuid_lib
-        filename = f"ai_{uuid_lib.uuid4().hex}.wav"
+        filename = f"ai_{uuid.uuid4().hex}.wav"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         with open(filepath, 'wb') as f:
             f.write(response.content)
 
-        print(f"AI audio saved: {filename}, size: {len(response.content)} bytes")
+        print(f"Audio saved: {filename}, size: {len(response.content)} bytes")
 
-        return jsonify({
-            'success':  True,
-            'file_url': f"/uploads/{filename}"
-        })
+        return jsonify({'success': True, 'file_url': f"/uploads/{filename}"})
 
-    except req.exceptions.Timeout:
-        return jsonify({'error': 'AI generation timed out. Please try again.'}), 504
+    except http_requests.exceptions.Timeout:
+        return jsonify({'error': 'Request timed out. Please try again.'}), 504
     except Exception as e:
-        print(f"AI generation error: {str(e)}")
+        print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # ─────────────────────────────────────────────────────────────
-# Save AI Track to project
+# Save AI Track
 # ─────────────────────────────────────────────────────────────
 @app.route('/api/save-ai-track', methods=['POST'])
 @login_required
@@ -732,7 +713,6 @@ def save_ai_track():
         )
         mysql.connection.commit()
         track_id = cur.lastrowid
-
         cur.execute(
             "INSERT INTO File_Version (track_id, version_number, name, changes_description) VALUES (%s,1,%s,%s)",
             (track_id, f"AI: {prompt[:50]}", 'AI Generated')
