@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — MusicCollab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>"/>
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-panel-left">
+    <div class="auth-brand">
+      <div class="logo-icon" style="width:52px;height:52px;font-size:26px">🎵</div>
+      <div class="logo-text" style="font-size:22px">Music<span>Collab</span></div>
+    </div>
+    <div class="auth-tagline">
+      Join the community.<br/>
+      Make <span>music</span><br/>
+      together.
+    </div>
+    <div style="margin-top:48px;display:flex;flex-direction:column;gap:16px;width:100%;max-width:320px">
+      <div style="display:flex;align-items:center;gap:12px;color:var(--text-secondary);font-size:14px">
+        <div style="width:32px;height:32px;background:var(--accent-soft);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🎤</div>
+        Connect with producers, singers &amp; musicians
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;color:var(--text-secondary);font-size:14px">
+        <div style="width:32px;height:32px;background:var(--accent-soft);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🎛️</div>
+        Upload and version-control your tracks
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;color:var(--text-secondary);font-size:14px">
+        <div style="width:32px;height:32px;background:var(--accent-soft);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⭐</div>
+        Get reviewed and discovered
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel (form) -->
+  <div class="auth-panel-right">
+    <div class="auth-form-box">
+
+      <div class="auth-form-title">Create account</div>
+      <div class="auth-form-sub">Start collaborating on music today.</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('register') }}" data-validate>
+
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name *</label>
+          <input class="form-control" type="text" id="name" name="name"
+                 placeholder="Your artist or real name" required />
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email *</label>
+          <input class="form-control" type="email" id="email" name="email"
+                 placeholder="you@example.com" required />
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password *</label>
+          <input class="form-control" type="password" id="password" name="password"
+                 placeholder="At least 8 characters" required />
+          <div class="form-hint">
+            Strength: <span id="password-strength" style="font-weight:600"></span>
+          </div>
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Role *</label>
+          <div class="role-grid">
+            <div>
+              <input type="radio" name="role" id="role-singer"   value="SINGER"   class="role-option"/>
+              <label class="role-label" for="role-singer">
+                <span class="role-emoji">🎤</span>
+                <span class="role-name">Singer</span>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-producer" value="PRODUCER" class="role-option"/>
+              <label class="role-label" for="role-producer">
+                <span class="role-emoji">🎛️</span>
+                <span class="role-name">Producer</span>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-listener" value="LISTENER" class="role-option" checked/>
+              <label class="role-label" for="role-listener">
+                <span class="role-emoji">🎧</span>
+                <span class="role-name">Listener</span>
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-admin"    value="ADMIN"    class="role-option"/>
+              <label class="role-label" for="role-admin">
+                <span class="role-emoji">🛡️</span>
+                <span class="role-name">Admin</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bio">Short Bio <span class="text-muted">(optional)</span></label>
+          <textarea class="form-control" id="bio" name="bio" rows="2"
+                    placeholder="Tell the community about yourself…"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">
+          Create Account →
+        </button>
+      </form>
+
+      <div class="auth-footer-link">
+        Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

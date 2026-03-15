@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Playlists{% endblock %}
+{% block topbar_title %}My Playlists{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:start">
+
+  <!-- Create form -->
+  <div>
+    <div class="card fade-in">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🎧 New Playlist</div>
+          <div class="card-subtitle">Curate your favorite tracks</div>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('playlists') }}" data-validate>
+        <div class="form-group">
+          <label class="form-label" for="name">Playlist Name *</label>
+          <input class="form-control" type="text" id="name" name="name"
+                 placeholder="e.g. Late Night Vibes, Workout Beats…" required maxlength="200"/>
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description <span class="text-muted">(optional)</span></label>
+          <textarea class="form-control" id="description" name="description" rows="3"
+                    placeholder="What's this playlist for? What's the vibe?"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Create Playlist →</button>
+      </form>
+    </div>
+
+    <!-- Playlist tips -->
+    <div class="card fade-in fade-in-delay-1" style="margin-top:16px;background:var(--accent-soft);border-color:var(--border-hover)">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:10px">✨ Playlist Ideas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        {% for idea in ['Late Night Vibes', 'Morning Energy', 'Focus Mode', 'Party Starter',
+                        'Chill Session', 'Workout Beats', 'Road Trip', 'Rainy Day'] %}
+        <button type="button"
+                onclick="document.getElementById('name').value='{{ idea }}'"
+                style="padding:4px 12px;border-radius:99px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-family:inherit;transition:background 0.15s"
+                onmouseover="this.style.background='var(--accent-soft)'"
+                onmouseout="this.style.background='transparent'">
+          {{ idea }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- My playlists grid -->
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Your Playlists</div>
+        <div class="section-subtitle">{{ playlists|length }} playlist{{ 's' if playlists|length != 1 else '' }}</div>
+      </div>
+    </div>
+
+    {% if playlists %}
+    <div class="grid-2">
+      {% set art_gradients = [
+        'linear-gradient(135deg,#1a1a2e,#6c63ff)',
+        'linear-gradient(135deg,#0f2027,#43e97b)',
+        'linear-gradient(135deg,#2d1b69,#ff6584)',
+        'linear-gradient(135deg,#0a0a0f,#ffa94d)',
+        'linear-gradient(135deg,#1a0533,#f093fb)',
+        'linear-gradient(135deg,#0d1117,#4facfe)',
+      ] %}
+      {% for pl in playlists %}
+      <div class="playlist-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+        <div class="playlist-art" style="background:{{ art_gradients[loop.index0 % art_gradients|length] }}">
+          🎧
+          <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.5);border-radius:99px;padding:3px 8px;font-size:11px;font-weight:600">
+            {{ pl.track_count }} tracks
+          </div>
+        </div>
+        <div class="playlist-body">
+          <div class="playlist-name">{{ pl.name }}</div>
+          {% if pl.description %}
+          <div class="playlist-desc">{{ pl.description[:80] }}{% if pl.description|length > 80 %}…{% endif %}</div>
+          {% endif %}
+          <div class="playlist-meta">
+            Created {{ pl.created_at.strftime('%B %d, %Y') if pl.created_at else '' }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🎧</div>
+      <div class="empty-title">No playlists yet</div>
+      <div class="empty-desc">Create your first playlist to organise your favorite tracks.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

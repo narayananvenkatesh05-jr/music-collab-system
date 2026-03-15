@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Upload Track{% endblock %}
+{% block topbar_title %}Upload Track{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Dashboard</a>
+  <span class="breadcrumb-sep">›</span>
+  <span>Upload Track</span>
+</div>
+
+<div style="max-width:680px;margin:0 auto">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🎚️ Upload a Track</div>
+        <div class="card-subtitle">Add an audio file to one of your projects</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('upload_track') }}" enctype="multipart/form-data" data-validate>
+
+      <!-- File drop zone -->
+      <div class="form-group">
+        <label class="form-label">Audio File *</label>
+        <div class="file-drop-zone" id="file-drop">
+          <div class="drop-icon">🎵</div>
+          <div class="drop-label">Drop your audio file here, or click to browse</div>
+          <div class="drop-hint">Supports MP3, WAV, FLAC, AAC, OGG, M4A · Max 50 MB</div>
+          <input type="file" name="track_file" accept=".mp3,.wav,.flac,.aac,.ogg,.m4a" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="project_id">Project *</label>
+          <select class="form-control" id="project_id" name="project_id" required>
+            <option value="">Select a project…</option>
+            {% for p in projects %}
+            <option value="{{ p.project_id }}"
+              {% if request.args.get('project_id')|int == p.project_id %}selected{% endif %}>
+              {{ p.title }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="track_type">Track Type</label>
+          <select class="form-control" id="track_type" name="track_type">
+            <option value="OTHER">Other</option>
+            <option value="VOCALS">🎤 Vocals</option>
+            <option value="INSTRUMENTAL">🎸 Instrumental</option>
+            <option value="BEAT">🥁 Beat</option>
+            <option value="MIXED">🎛️ Mixed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="duration">Duration (seconds) <span class="text-muted">optional</span></label>
+        <input class="form-control" type="number" id="duration" name="duration"
+               placeholder="e.g. 210 for 3:30" min="0" max="3600"/>
+        <div class="form-hint">Leave blank if unknown — can be updated later.</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">Upload Track →</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Accepted formats card -->
+  <div class="card fade-in fade-in-delay-1" style="margin-top:20px">
+    <div style="font-weight:700;margin-bottom:14px">📋 Accepted Formats</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      {% for fmt, desc in [('MP3','Most compatible'),('WAV','Lossless quality'),('FLAC','High-res audio'),('AAC','Apple standard'),('OGG','Open source'),('M4A','iTunes format')] %}
+      <div style="padding:12px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);text-align:center">
+        <div style="font-weight:700;color:var(--accent);font-size:14px">{{ fmt }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">{{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if not projects %}
+  <div class="alert alert-warning fade-in" style="margin-top:20px">
+    ⚠️ You don't have any projects to upload to.
+    <a href="{{ url_for('create_project') }}" style="color:var(--accent);font-weight:600">Create a project first →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

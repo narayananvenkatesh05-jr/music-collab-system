@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Reviews{% endblock %}
+{% block topbar_title %}Reviews{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start">
+
+  <!-- Left: Write a review -->
+  <div>
+    <div class="card fade-in">
+      <div class="card-header">
+        <div>
+          <div class="card-title">⭐ Write a Review</div>
+          <div class="card-subtitle">Share your thoughts on a project</div>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('reviews') }}" data-validate>
+
+        <div class="form-group">
+          <label class="form-label" for="project_id">Project *</label>
+          <select class="form-control" id="project_id" name="project_id" required>
+            <option value="">Choose a project to review…</option>
+            {% for p in projects %}
+            <option value="{{ p.project_id }}"
+              {% if request.args.get('project_id')|int == p.project_id %}selected{% endif %}>
+              {{ p.title }} — by {{ p.creator_name }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Rating *</label>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:4px">
+            <div class="star-rating-widget" style="display:flex;gap:6px">
+              {% for i in range(1,6) %}
+              <span class="star empty" data-val="{{ i }}" style="font-size:28px;cursor:pointer">★</span>
+              {% endfor %}
+            </div>
+            <span id="rating-label" style="font-size:14px;color:var(--text-muted)">Click to rate</span>
+          </div>
+          <input type="hidden" name="rating" id="rating-input" value="" required/>
+          <div class="form-error" id="rating-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="feedback">Your Feedback</label>
+          <textarea class="form-control" id="feedback" name="feedback" rows="5"
+                    placeholder="What did you like? What could be improved? Any specific thoughts on the production, vocals, arrangement?…"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="review-submit-btn">Submit Review →</button>
+      </form>
+    </div>
+
+    <!-- Recent reviews -->
+    <div class="section-header" style="margin-top:32px">
+      <div class="section-title">Recent Reviews</div>
+    </div>
+
+    {% if recent_reviews %}
+    <div style="display:flex;flex-direction:column;gap:14px">
+      {% for r in recent_reviews %}
+      <div class="review-card fade-in" style="animation-delay:{{ loop.index0 * 0.04 }}s">
+        <div class="review-header">
+          <div class="review-avatar">{{ r.reviewer_name[0].upper() }}</div>
+          <div class="review-meta">
+            <div class="review-name">{{ r.reviewer_name }}</div>
+            <div class="review-date" style="display:flex;align-items:center;gap:6px">
+              <a href="{{ url_for('project_detail', project_id=r.project_id) }}"
+                 style="color:var(--accent);font-size:12px">{{ r.project_title }}</a>
+              <span>·</span>
+              {{ r.created_at.strftime('%b %d, %Y') if r.created_at else '' }}
+            </div>
+          </div>
+          <div class="star-rating" style="margin-left:auto">
+            {% for i in range(1,6) %}
+            <span class="star {% if i <= r.rating %}filled{% else %}empty{% endif %}">★</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% if r.feedback %}
+        <div class="review-text">{{ r.feedback }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">⭐</div>
+      <div class="empty-title">No reviews yet</div>
+      <div class="empty-desc">Be the first to review a project.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Sidebar info -->
+  <div>
+    <div class="card fade-in">
+      <div style="font-weight:700;margin-bottom:16px;font-size:16px">💡 Review Guidelines</div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;color:var(--text-secondary)">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span>🎯</span>
+          <span>Be specific — mention which tracks, moments, or elements stood out.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span>🌱</span>
+          <span>Be constructive — offer suggestions alongside criticism.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span>🤝</span>
+          <span>Be respectful — everyone is here to grow and improve.</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span>⚡</span>
+          <span>Be timely — fresh feedback is the most valuable.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rating scale -->
+    <div class="card fade-in fade-in-delay-1" style="margin-top:16px">
+      <div style="font-weight:700;margin-bottom:14px">Rating Scale</div>
+      {% for stars, label, color in [
+        (5,'Exceptional','#43e97b'),
+        (4,'Very Good','#a8e97c'),
+        (3,'Good','#ffd43b'),
+        (2,'Needs Work','#ffa94d'),
+        (1,'Poor','#ff6584')
+      ] %}
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div style="color:{{ color }};font-size:14px">{% for i in range(stars) %}★{% endfor %}{% for i in range(5-stars) %}☆{% endfor %}</div>
+        <div style="color:var(--text-secondary)">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Extended star label
+const labels = ['', 'Poor', 'Needs Work', 'Good', 'Very Good', 'Exceptional'];
+document.querySelectorAll('.star-rating-widget .star').forEach((star, idx) => {
+  star.addEventListener('click', () => {
+    document.getElementById('rating-input').value = idx + 1;
+    document.getElementById('rating-label').textContent = labels[idx+1];
+    document.getElementById('rating-label').style.color = 'var(--accent)';
+  });
+});
+
+document.querySelector('form[data-validate]').addEventListener('submit', function(e) {
+  const rating = document.getElementById('rating-input').value;
+  if (!rating) {
+    e.preventDefault();
+    const err = document.getElementById('rating-error');
+    if (err) err.textContent = 'Please select a rating.';
+  }
+});
+</script>
+{% endblock %}

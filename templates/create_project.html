@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Create Project{% endblock %}
+{% block topbar_title %}Create New Project{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Dashboard</a>
+  <span class="breadcrumb-sep">›</span>
+  <a href="{{ url_for('projects') }}">Projects</a>
+  <span class="breadcrumb-sep">›</span>
+  <span>Create</span>
+</div>
+
+<div style="max-width:680px;margin:0 auto">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🎵 New Music Project</div>
+        <div class="card-subtitle">Set up your project workspace</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('create_project') }}" data-validate>
+      <div class="form-group">
+        <label class="form-label" for="title">Project Title *</label>
+        <input class="form-control" type="text" id="title" name="title"
+               placeholder="e.g. Midnight Echoes, Soul Revival…" required maxlength="200"/>
+        <div class="form-error"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="genre">Genre</label>
+          <select class="form-control" id="genre" name="genre">
+            <option value="">Select genre…</option>
+            {% for g in ['Pop','R&B','Hip-Hop','Electronic','Rock','Jazz','Classical',
+                         'Lo-fi','Afrobeats','Latin','Country','Reggae','Metal','Folk','Other'] %}
+            <option value="{{ g }}">{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="status">Status</label>
+          <select class="form-control" id="status" name="status">
+            <option value="ACTIVE">Active</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="4"
+                  placeholder="What is this project about? What's the vision, mood, or goal?"></textarea>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">Create Project →</button>
+        <a href="{{ url_for('projects') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tips card -->
+  <div class="card fade-in fade-in-delay-1" style="margin-top:20px;background:var(--accent-soft);border-color:var(--border-hover)">
+    <div style="font-weight:700;margin-bottom:12px;color:var(--accent)">💡 Tips for a great project</div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--text-secondary)">
+      <div>✓ Use a memorable, descriptive title that captures the vibe</div>
+      <div>✓ Add a genre so collaborators can find your project</div>
+      <div>✓ Write a clear description explaining the sound you're going for</div>
+      <div>✓ You can always update the status as the project progresses</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

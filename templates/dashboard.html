@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats strip -->
+<div class="stats-strip">
+  <div class="stat-card fade-in">
+    <div class="stat-icon purple">🎵</div>
+    <div>
+      <div class="stat-value" data-count="{{ my_projects|length }}">0</div>
+      <div class="stat-label">My Projects</div>
+    </div>
+  </div>
+  <div class="stat-card fade-in fade-in-delay-1">
+    <div class="stat-icon pink">🤝</div>
+    <div>
+      <div class="stat-value" data-count="{{ collab_projects|length }}">0</div>
+      <div class="stat-label">Collaborations</div>
+    </div>
+  </div>
+  <div class="stat-card fade-in fade-in-delay-2">
+    <div class="stat-icon green">🎚️</div>
+    <div>
+      <div class="stat-value" data-count="{{ recent_tracks|length }}">0</div>
+      <div class="stat-label">Recent Tracks</div>
+    </div>
+  </div>
+  <div class="stat-card fade-in fade-in-delay-3">
+    <div class="stat-icon orange">🎧</div>
+    <div>
+      <div class="stat-value" data-count="{{ playlists|length }}">0</div>
+      <div class="stat-label">Playlists</div>
+    </div>
+  </div>
+</div>
+
+<!-- My Projects -->
+<div class="section-header">
+  <div>
+    <div class="section-title">My Projects</div>
+    <div class="section-subtitle">Projects you created</div>
+  </div>
+  <a href="{{ url_for('create_project') }}" class="btn btn-primary btn-sm">+ New Project</a>
+</div>
+
+{% if my_projects %}
+<div class="grid-3" style="margin-bottom:40px">
+  {% for p in my_projects %}
+  <a href="{{ url_for('project_detail', project_id=p.project_id) }}" style="display:block;text-decoration:none">
+    <div class="project-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+      <div class="project-card-art" style="background:linear-gradient(135deg,
+        {% set colors = [
+          '#6c63ff,#ff6584','#43e97b,#38f9d7','#fa709a,#fee140',
+          '#4facfe,#00f2fe','#f093fb,#f5576c','#5f72be,#9921e8'
+        ] %}
+        {{ colors[loop.index0 % colors|length] }})">
+        <span class="art-icon">🎵</span>
+        {% if p.genre %}<span class="genre-tag">{{ p.genre }}</span>{% endif %}
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-title">{{ p.title }}</div>
+        <div class="project-card-meta">
+          <span>🎚️ {{ p.track_count }} tracks</span>
+          <span class="badge badge-{{ 'green' if p.status=='ACTIVE' else ('purple' if p.status=='COMPLETED' else 'gray') }}">
+            {{ p.status.lower() }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-bottom:40px">
+  <div class="empty-icon">🎵</div>
+  <div class="empty-title">No projects yet</div>
+  <div class="empty-desc">Create your first music project to get started.</div>
+  <a href="{{ url_for('create_project') }}" class="btn btn-primary" style="margin-top:20px">Create Project</a>
+</div>
+{% endif %}
+
+<!-- Collaboration Projects -->
+<div class="section-header">
+  <div>
+    <div class="section-title">Collaborations</div>
+    <div class="section-subtitle">Projects you're contributing to</div>
+  </div>
+  <a href="{{ url_for('collaborate') }}" class="btn btn-ghost btn-sm">Browse Projects</a>
+</div>
+
+{% if collab_projects %}
+<div class="grid-3" style="margin-bottom:40px">
+  {% for p in collab_projects %}
+  <a href="{{ url_for('project_detail', project_id=p.project_id) }}" style="display:block;text-decoration:none">
+    <div class="project-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+      <div class="project-card-art" style="background:linear-gradient(135deg,#fa709a,#fee140)">
+        <span class="art-icon">🤝</span>
+        {% if p.genre %}<span class="genre-tag">{{ p.genre }}</span>{% endif %}
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-title">{{ p.title }}</div>
+        <div class="project-card-meta">
+          <span>👤 {{ p.creator_name }}</span>
+          <span>🎭 {{ p.role_in_project or 'Collaborator' }}</span>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-bottom:40px">
+  <div class="empty-icon">🤝</div>
+  <div class="empty-title">Not collaborating yet</div>
+  <div class="empty-desc">Join an existing project and contribute your skills.</div>
+  <a href="{{ url_for('collaborate') }}" class="btn btn-outline" style="margin-top:20px">Find Projects</a>
+</div>
+{% endif %}
+
+<!-- Recent Tracks + Quick Upload -->
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start">
+  <div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Recent Tracks</div>
+        <div class="section-subtitle">Latest uploads in your projects</div>
+      </div>
+      <a href="{{ url_for('upload_track') }}" class="btn btn-ghost btn-sm">Upload Track</a>
+    </div>
+
+    {% if recent_tracks %}
+    <div class="track-list">
+      {% for t in recent_tracks %}
+      <div class="track-item fade-in" data-url="{{ t.file_url }}"
+           style="animation-delay:{{ loop.index0 * 0.04 }}s">
+        <div class="track-num">{{ loop.index }}</div>
+        <button class="track-play-btn" type="button">▶</button>
+        <div class="track-thumb">🎵</div>
+        <div class="track-info">
+          <div class="track-name">{{ t.file_url.split('/')[-1] }}</div>
+          <div class="track-meta">{{ t.project_title }} · {{ t.uploader_name }}</div>
+        </div>
+        <div class="track-type">
+          <span class="badge badge-purple">{{ t.track_type }}</span>
+        </div>
+        <div class="track-duration">
+          {% if t.duration %}{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}{% else %}—{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🎚️</div>
+      <div class="empty-title">No tracks uploaded</div>
+      <div class="empty-desc">Upload your first track to a project.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Playlists sidebar -->
+  <div>
+    <div class="section-header">
+      <div class="section-title">My Playlists</div>
+      <a href="{{ url_for('playlists') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    {% if playlists %}
+    <div style="display:flex;flex-direction:column;gap:12px">
+      {% for pl in playlists %}
+      <div class="card fade-in" style="animation-delay:{{ loop.index0 * 0.06 }}s;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎧</div>
+          <div style="min-width:0">
+            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pl.name }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ pl.description or 'No description' }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:32px 20px">
+      <div class="empty-icon">🎧</div>
+      <div class="empty-title">No playlists yet</div>
+      <a href="{{ url_for('playlists') }}" class="btn btn-outline btn-sm" style="margin-top:12px">Create Playlist</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

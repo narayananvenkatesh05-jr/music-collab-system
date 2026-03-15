@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Browse Projects{% endblock %}
+{% block topbar_title %}Browse Projects{% endblock %}
+
+{% block content %}
+<!-- Filter bar -->
+<div class="card fade-in" style="margin-bottom:28px;padding:18px 24px">
+  <form method="GET" action="{{ url_for('projects') }}" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px;position:relative">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted)">🔍</span>
+      <input class="form-control" type="text" name="q" value="{{ search }}"
+             placeholder="Search projects…" style="padding-left:36px"/>
+    </div>
+    <select class="form-control" name="genre" style="width:160px">
+      <option value="">All Genres</option>
+      {% for g in genres %}
+      <option value="{{ g }}" {% if g == selected_genre %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    {% if search or selected_genre %}
+    <a href="{{ url_for('projects') }}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Results header -->
+<div class="section-header">
+  <div>
+    <div class="section-title">
+      {% if search %}Results for "{{ search }}"{% elif selected_genre %}{{ selected_genre }} Projects{% else %}All Projects{% endif %}
+    </div>
+    <div class="section-subtitle">{{ projects|length }} project{{ 's' if projects|length != 1 else '' }} found</div>
+  </div>
+  <a href="{{ url_for('create_project') }}" class="btn btn-primary btn-sm">+ Create Project</a>
+</div>
+
+{% if projects %}
+<div class="grid-3">
+  {% set color_pairs = [
+    '#6c63ff,#ff6584','#43e97b,#38f9d7','#fa709a,#fee140',
+    '#4facfe,#00f2fe','#f093fb,#f5576c','#5f72be,#9921e8',
+    '#f7971e,#ffd200','#11998e,#38ef7d'
+  ] %}
+  {% for p in projects %}
+  <a href="{{ url_for('project_detail', project_id=p.project_id) }}" style="display:block;text-decoration:none">
+    <div class="project-card fade-in" style="animation-delay:{{ loop.index0 * 0.04 }}s">
+      <div class="project-card-art" style="background:linear-gradient(135deg,{{ color_pairs[loop.index0 % color_pairs|length] }})">
+        <span class="art-icon">🎵</span>
+        {% if p.genre %}<span class="genre-tag">{{ p.genre }}</span>{% endif %}
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-title">{{ p.title }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin:6px 0 10px">
+          by {{ p.creator_name }}
+          {% if p.description %} · {{ p.description[:60] }}{% if p.description|length > 60 %}…{% endif %}{% endif %}
+        </div>
+        <div class="project-card-meta">
+          <span>🎚️ {{ p.track_count }} tracks</span>
+          {% if p.avg_rating %}<span>⭐ {{ '%.1f'|format(p.avg_rating) }}</span>{% endif %}
+          <span class="badge badge-{{ 'green' if p.status=='ACTIVE' else ('purple' if p.status=='COMPLETED' else 'gray') }}">
+            {{ p.status.lower() }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📁</div>
+  <div class="empty-title">No projects found</div>
+  <div class="empty-desc">{% if search %}Try a different search term.{% else %}Be the first to create a project!{% endif %}</div>
+  <a href="{{ url_for('create_project') }}" class="btn btn-primary" style="margin-top:20px">Create Project</a>
+</div>
+{% endif %}
+{% endblock %}

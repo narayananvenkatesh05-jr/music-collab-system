@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }}{% endblock %}
+{% block topbar_title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}">Dashboard</a>
+  <span class="breadcrumb-sep">›</span>
+  <a href="{{ url_for('projects') }}">Projects</a>
+  <span class="breadcrumb-sep">›</span>
+  <span>{{ project.title }}</span>
+</div>
+
+<!-- Project header -->
+<div class="card fade-in" style="margin-bottom:28px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,rgba(108,99,255,0.15) 100%)">
+  <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+    <div style="width:100px;height:100px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0">🎵</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px">{{ project.title }}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        {% if project.genre %}<span class="badge badge-purple">{{ project.genre }}</span>{% endif %}
+        <span class="badge badge-{{ 'green' if project.status=='ACTIVE' else ('purple' if project.status=='COMPLETED' else 'gray') }}">
+          {{ project.status.lower() }}
+        </span>
+        <span style="font-size:13px;color:var(--text-muted)">by {{ project.creator_name }}</span>
+      </div>
+      {% if project.description %}
+      <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;max-width:600px">{{ project.description }}</p>
+      {% endif %}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
+      {% if rating_info.avg_rating %}
+      <div style="display:flex;align-items:center;gap:6px;font-size:14px">
+        <span style="font-size:18px">⭐</span>
+        <span style="font-weight:700;font-size:18px">{{ '%.1f'|format(rating_info.avg_rating) }}</span>
+        <span style="color:var(--text-muted)">({{ rating_info.total }} reviews)</span>
+      </div>
+      {% endif %}
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <a href="{{ url_for('upload_track') }}?project_id={{ project.project_id }}" class="btn btn-primary btn-sm">🎚️ Upload Track</a>
+        {% if not is_collaborator and project.created_by != session.user_id %}
+        <a href="{{ url_for('collaborate') }}" class="btn btn-outline btn-sm">🤝 Join Project</a>
+        {% endif %}
+        <a href="{{ url_for('reviews') }}?project_id={{ project.project_id }}" class="btn btn-ghost btn-sm">⭐ Review</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="tab-tracks">🎚️ Tracks ({{ tracks|length }})</button>
+  <button class="tab-btn" data-tab="tab-collabs">🤝 Collaborators ({{ collaborators|length }})</button>
+  <button class="tab-btn" data-tab="tab-reviews">⭐ Reviews ({{ reviews|length }})</button>
+</div>
+
+<!-- Tracks tab -->
+<div class="tab-panel active" id="tab-tracks">
+  {% if tracks %}
+  <div class="track-list">
+    {% for t in tracks %}
+    <div class="track-item fade-in" data-url="{{ t.file_url }}" style="animation-delay:{{ loop.index0 * 0.04 }}s">
+      <div class="track-num">{{ loop.index }}</div>
+      <button class="track-play-btn" type="button">▶</button>
+      <div class="track-thumb">
+        {% if t.track_type == 'VOCALS' %}🎤
+        {% elif t.track_type == 'BEAT' %}🥁
+        {% elif t.track_type == 'INSTRUMENTAL' %}🎸
+        {% elif t.track_type == 'MIXED' %}🎛️
+        {% else %}🎵{% endif %}
+      </div>
+      <div class="track-info">
+        <div class="track-name">{{ t.file_url.split('/')[-1] }}</div>
+        <div class="track-meta">Uploaded by {{ t.uploader_name }} · {{ t.uploaded_at.strftime('%b %d, %Y') if t.uploaded_at else '' }}</div>
+      </div>
+      <div class="track-type">
+        <span class="badge badge-purple">{{ t.track_type }}</span>
+      </div>
+      <div class="track-duration">
+        {% if t.duration %}{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}{% else %}—{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🎚️</div>
+    <div class="empty-title">No tracks yet</div>
+    <div class="empty-desc">Be the first to upload a track to this project.</div>
+    <a href="{{ url_for('upload_track') }}" class="btn btn-primary" style="margin-top:16px">Upload Track</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Collaborators tab -->
+<div class="tab-panel" id="tab-collabs">
+  {% if collaborators %}
+  <div class="collab-list">
+    {% for c in collaborators %}
+    <div class="collab-item fade-in">
+      <div class="collab-avatar">{{ c.name[0].upper() }}</div>
+      <div>
+        <div class="collab-name">{{ c.name }}</div>
+        <div class="collab-role">{{ c.role_in_project or c.role }} · Joined {{ c.joined_at.strftime('%b %Y') if c.joined_at else '' }}</div>
+      </div>
+      <span class="badge badge-gray" style="margin-left:auto">{{ c.role }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🤝</div>
+    <div class="empty-title">No collaborators yet</div>
+    <div class="empty-desc">Invite others to join this project.</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Reviews tab -->
+<div class="tab-panel" id="tab-reviews">
+  {% if reviews %}
+  <div style="display:flex;flex-direction:column;gap:14px">
+    {% for r in reviews %}
+    <div class="review-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+      <div class="review-header">
+        <div class="review-avatar">{{ r.reviewer_name[0].upper() }}</div>
+        <div class="review-meta">
+          <div class="review-name">{{ r.reviewer_name }}</div>
+          <div class="review-date">{{ r.created_at.strftime('%B %d, %Y') if r.created_at else '' }}</div>
+        </div>
+        <div class="star-rating" style="margin-left:auto">
+          {% for i in range(1,6) %}
+          <span class="star {% if i <= r.rating %}filled{% else %}empty{% endif %}">★</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% if r.feedback %}
+      <div class="review-text">{{ r.feedback }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">⭐</div>
+    <div class="empty-title">No reviews yet</div>
+    <div class="empty-desc">Be the first to review this project.</div>
+    <a href="{{ url_for('reviews') }}" class="btn btn-outline" style="margin-top:16px">Write a Review</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

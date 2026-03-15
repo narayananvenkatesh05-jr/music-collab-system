@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — MusicCollab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>"/>
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-panel-left">
+    <div class="auth-brand">
+      <div class="logo-icon" style="width:52px;height:52px;font-size:26px">🎵</div>
+      <div class="logo-text" style="font-size:22px">Music<span>Collab</span></div>
+    </div>
+    <div class="auth-tagline">
+      Welcome back.<br/>
+      Your music<br/>
+      <span>awaits you.</span>
+    </div>
+
+    <!-- Decorative waveform -->
+    <div style="margin-top:56px;display:flex;align-items:flex-end;gap:5px;height:60px;opacity:0.5">
+      {% for h in [20,35,50,42,55,28,60,45,38,52,30,48,20,35,50] %}
+      <div style="width:8px;border-radius:4px;background:var(--accent);height:{{ h }}px;opacity:0.7"></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-panel-right">
+    <div class="auth-form-box">
+
+      <div class="auth-form-title">Sign in</div>
+      <div class="auth-form-sub">Continue your musical journey.</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}" data-validate>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input class="form-control" type="email" id="email" name="email"
+                 placeholder="you@example.com" required autofocus />
+          <div class="form-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div style="position:relative">
+            <input class="form-control" type="password" id="password" name="password"
+                   placeholder="Your password" required style="padding-right:48px"/>
+            <button type="button" id="pwd-toggle"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted)"
+                    title="Show/hide password">👁️</button>
+          </div>
+          <div class="form-error"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px">
+          Sign In →
+        </button>
+      </form>
+
+      <!-- Demo hint -->
+      <div style="margin-top:20px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;color:var(--text-muted)">
+        <div style="font-weight:600;color:var(--text-secondary);margin-bottom:6px">🧪 Demo accounts (after running seed SQL):</div>
+        <div>Producer: <code style="color:var(--accent)">alex@example.com</code></div>
+        <div>Singer: <code style="color:var(--accent)">sam@example.com</code></div>
+        <div style="margin-top:4px;font-style:italic">Passwords are hashed — create your own account.</div>
+      </div>
+
+      <div class="auth-footer-link">
+        New here? <a href="{{ url_for('register') }}">Create an account</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  const toggle = document.getElementById('pwd-toggle');
+  const pwd    = document.getElementById('password');
+  if (toggle && pwd) {
+    toggle.addEventListener('click', () => {
+      pwd.type = pwd.type === 'password' ? 'text' : 'password';
+      toggle.textContent = pwd.type === 'password' ? '👁️' : '🙈';
+    });
+  }
+</script>
+</body>
+</html>
