@@ -596,8 +596,26 @@ def uploaded_file(filename):
     from flask import send_from_directory
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-with app.app_context():
-    init_db()
+import threading
+
+def init_db_background():
+    with app.app_context():
+        init_db()
+
+thread = threading.Thread(target=init_db_background)
+thread.daemon = True
+thread.start()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+```
+
+Press **Ctrl+S**
+
+---
+
+## STEP 2 — Push
+```
+git add .
+git commit -m "Fix worker timeout move init_db to background thread"
+git push
