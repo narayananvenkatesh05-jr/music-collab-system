@@ -3,7 +3,17 @@
 {% block topbar_title %}Dashboard{% endblock %}
 
 {% block content %}
-
+<!-- Free Tracks Player Section -->
+<div class="free-tracks-section">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <div class="section-title">🎵 Free Music Library</div>
+      <div class="section-subtitle">Click any track to play — no ads, completely free</div>
+    </div>
+    <span class="badge badge-green">● Live Player</span>
+  </div>
+  <div id="free-tracks-list"></div>
+</div>
 {% set genre_imgs = {
   'Electronic': 'photo-1571330735066-03aaa9429d89',
   'R&B': 'photo-1493225457124-a3eb161ffa5f',

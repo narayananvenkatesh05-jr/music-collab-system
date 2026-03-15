@@ -129,7 +129,8 @@
     </div>
   </main>
 </div>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player.css') }}"/>
+<script src="{{ url_for('static', filename='js/player.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
