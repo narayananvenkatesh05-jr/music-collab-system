@@ -608,14 +608,5 @@ thread.start()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-```
 
-Press **Ctrl+S**
 
----
-
-## STEP 2 — Push
-```
-git add .
-git commit -m "Fix worker timeout move init_db to background thread"
-git push
