@@ -8,8 +8,6 @@ import os
 import uuid
 from functools import wraps
 
-import requests as http_requests
-
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash, jsonify)
 from flask_mysqldb import MySQL
@@ -493,90 +491,6 @@ def playlists():
     cur.close()
     return render_template('playlists.html', playlists=user_playlists)
 
-@app.route('/ai-generate', methods=['GET', 'POST'])
-@login_required
-def ai_generate():
-    uid = session['user_id']
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT p.* FROM Project p WHERE p.created_by = %s
-        UNION
-        SELECT p.* FROM Project p
-        JOIN Collaboration c ON c.project_id = p.project_id
-        WHERE c.user_id = %s ORDER BY title
-    """, (uid, uid))
-    projects = cur.fetchall()
-    cur.close()
-    return render_template('ai_generate.html', projects=projects)
-
-@app.route('/api/generate-music', methods=['POST'])
-@login_required
-def generate_music_api():
-    prompt = request.json.get('prompt', '').strip()
-    if not prompt:
-        return jsonify({'error': 'Prompt is required'}), 400
-
-    token = os.environ.get('HF_TOKEN', '') or os.environ.get('HFTOKEN', '')
-    print(f"Token found: {bool(token)}, length: {len(token)}")
-
-    if not token:
-        return jsonify({'error': 'AI service not configured'}), 500
-
-    try:
-        url  = "https://api-inference.huggingface.co/models/facebook/musicgen-small"
-        hdrs = {"Authorization": f"Bearer {token}"}
-        resp = http_requests.post(url, headers=hdrs, json={"inputs": prompt}, timeout=120)
-
-        print(f"HF status: {resp.status_code}")
-
-        if resp.status_code == 503:
-            return jsonify({'error': 'MODEL_LOADING'}), 503
-        if resp.status_code == 401:
-            return jsonify({'error': 'Invalid token'}), 401
-        if resp.status_code != 200:
-            return jsonify({'error': f'API error {resp.status_code}: {resp.text[:200]}'}), 400
-
-        fname = f"ai_{uuid.uuid4().hex}.wav"
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-        with open(fpath, 'wb') as f:
-            f.write(resp.content)
-
-        print(f"Saved: {fname}, size: {len(resp.content)}")
-        return jsonify({'success': True, 'file_url': f"/uploads/{fname}"})
-
-    except http_requests.exceptions.Timeout:
-        return jsonify({'error': 'Timed out. Please try again.'}), 504
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/save-ai-track', methods=['POST'])
-@login_required
-def save_ai_track():
-    uid        = session['user_id']
-    project_id = request.form.get('project_id', '')
-    file_url   = request.form.get('file_url', '')
-    prompt     = request.form.get('prompt', 'AI Generated')
-    if not project_id or not file_url:
-        return jsonify({'error': 'Project and file required'}), 400
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute(
-            "INSERT INTO Track (project_id, uploaded_by, track_type, file_url, duration) VALUES (%s,%s,%s,%s,%s)",
-            (project_id, uid, 'OTHER', file_url, 0)
-        )
-        mysql.connection.commit()
-        track_id = cur.lastrowid
-        cur.execute(
-            "INSERT INTO File_Version (track_id, version_number, name, changes_description) VALUES (%s,1,%s,%s)",
-            (track_id, f"AI: {prompt[:50]}", 'AI Generated')
-        )
-        mysql.connection.commit()
-        cur.close()
-        return jsonify({'success': True, 'track_id': track_id})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/search')
 @login_required
 def api_search():
@@ -596,17 +510,8 @@ def uploaded_file(filename):
     from flask import send_from_directory
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-import threading
-
-def init_db_background():
-    with app.app_context():
-        init_db()
-
-thread = threading.Thread(target=init_db_background)
-thread.daemon = True
-thread.start()
+with app.app_context():
+    init_db()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
