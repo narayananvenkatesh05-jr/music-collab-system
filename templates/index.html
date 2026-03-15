@@ -5,146 +5,149 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MusicCollab — Where Music Comes Alive</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced.css') }}"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>"/>
 </head>
-<body>
-<div class="landing-hero">
+<body class="landing-body">
 
-  <!-- Nav -->
-  <nav class="landing-nav">
-    <div class="landing-nav-logo">
-      <div class="logo-icon">🎵</div>
-      <span>Music<span style="color:var(--accent)">Collab</span></span>
+<div class="grain-overlay"></div>
+
+<div class="hero-fullscreen">
+  <div class="hero-bg">
+    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1800&q=80"
+         alt="Music Studio" class="hero-bg-img"
+         onerror="this.parentElement.style.background='linear-gradient(135deg,#0a0a0f,#1a1030)'"/>
+    <div class="hero-bg-overlay"></div>
+  </div>
+
+  <nav class="hero-nav">
+    <div class="hero-nav-logo">
+      <div class="logo-icon-lg">🎵</div>
+      <span class="hero-logo-text">Music<span style="color:var(--accent)">Collab</span></span>
     </div>
-    <div class="landing-nav-links">
+    <div class="hero-nav-links">
       <a href="{{ url_for('login') }}"    class="btn btn-ghost btn-sm">Log In</a>
-      <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Get Started Free</a>
     </div>
   </nav>
 
-  <!-- Hero -->
-  <div class="hero-body fade-in">
-    <div class="hero-eyebrow">For Musicians, Producers &amp; Creators</div>
+  <div class="hero-content">
+    <div class="hero-eyebrow-pill">
+      <span class="eyebrow-dot"></span>
+      For Musicians, Producers &amp; Creators
+    </div>
 
-    <h1 class="hero-title">
-      Create.<br/>
-      <span class="accent-word">Collaborate.</span><br/>
-      Release.
+    <h1 class="hero-headline">
+      <span class="headline-line">Create.</span>
+      <span class="headline-line accent-line">Collaborate.</span>
+      <span class="headline-line">Release.</span>
     </h1>
 
-    <p class="hero-desc">
-      MusicCollab is the platform where artists, singers, producers, and listeners
+    <p class="hero-subtext">
+      The platform where artists, singers, producers, and listeners
       come together to build extraordinary music — from first beat to final mix.
     </p>
 
-    <div class="hero-cta">
-      <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
-        🚀 Start Creating Free
+    <div class="hero-actions">
+      <a href="{{ url_for('register') }}" class="btn-hero-primary">
+        <span>🚀</span> Start Creating Free
       </a>
-      <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg">
-        Sign In
+      <a href="{{ url_for('login') }}" class="btn-hero-secondary">
+        Sign In →
       </a>
     </div>
 
-    <!-- Floating cards decoration -->
-    <div style="margin-top:64px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
-      <div class="card fade-in fade-in-delay-1" style="max-width:230px;text-align:left">
-        <div style="font-size:24px;margin-bottom:10px">🎛️</div>
-        <div style="font-weight:700;margin-bottom:4px">Midnight Echoes</div>
-        <div style="font-size:12px;color:var(--text-muted)">Electronic · 4 tracks · 3 collaborators</div>
-        <div style="margin-top:12px;display:flex;gap:6px">
-          <span class="badge badge-green">Active</span>
-          <span class="badge badge-purple">Electronic</span>
-        </div>
-      </div>
-      <div class="card fade-in fade-in-delay-2" style="max-width:230px;text-align:left">
-        <div style="font-size:24px;margin-bottom:10px">🎤</div>
-        <div style="font-weight:700;margin-bottom:4px">Soul Revival</div>
-        <div style="font-size:12px;color:var(--text-muted)">R&amp;B · 6 tracks · 5 collaborators</div>
-        <div style="margin-top:12px;display:flex;gap:6px">
-          <span class="badge badge-green">Active</span>
-          <span class="badge badge-pink">R&amp;B</span>
-        </div>
-      </div>
-      <div class="card fade-in fade-in-delay-3" style="max-width:230px;text-align:left">
-        <div style="font-size:24px;margin-bottom:10px">🎸</div>
-        <div style="font-weight:700;margin-bottom:4px">Frequency Dreams</div>
-        <div style="font-size:12px;color:var(--text-muted)">Lo-fi · 8 tracks · 2 collaborators</div>
-        <div style="margin-top:12px;display:flex;gap:6px">
-          <span class="badge badge-purple">Completed</span>
-          <span class="badge badge-orange">Lo-fi</span>
-        </div>
-      </div>
+    <div class="waveform-container">
+      {% for h in [12,20,32,28,40,35,45,38,42,50,44,36,28,22,30,40,48,43,37,29,21,33,44,50,46,38,30,24,18,26,36,46,42,34,26] %}
+      <div class="wbar" style="--h:{{ h }}px; animation-delay: {{ loop.index0 * 0.06 }}s"></div>
+      {% endfor %}
     </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-dot"></div>
+    <span>Scroll to explore</span>
   </div>
 </div>
 
-<!-- Features -->
-<section class="features-section">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="text-center">
-      <div class="hero-eyebrow" style="justify-content:center">Platform Features</div>
-      <h2 style="font-family:var(--font-display);font-size:38px;font-weight:800;letter-spacing:-1px;margin-top:12px">
-        Everything you need to<br/><span style="color:var(--accent)">create together</span>
-      </h2>
+<section class="stats-band">
+  {% for icon, num, label in [('🎵','500+','Projects Created'),('🎤','1.2K+','Artists Joined'),('🎚️','3.4K+','Tracks Uploaded'),('⭐','890+','Reviews Given')] %}
+  <div class="stat-pill">
+    <span class="stat-pill-icon">{{ icon }}</span>
+    <div>
+      <div class="stat-pill-num">{{ num }}</div>
+      <div class="stat-pill-label">{{ label }}</div>
     </div>
+  </div>
+  {% endfor %}
+</section>
 
-    <div class="features-grid">
-      <div class="feature-card fade-in">
-        <div class="feature-icon">🎵</div>
-        <div class="feature-title">Project Workspaces</div>
-        <div class="feature-desc">Create dedicated project spaces with genre tags, status tracking, and full team visibility.</div>
+<section class="features-dark">
+  <div class="features-inner">
+    <div class="section-eyebrow">Platform Features</div>
+    <h2 class="features-headline">
+      Everything you need to<br/>
+      <span style="color:var(--accent)">create together</span>
+    </h2>
+
+    <div class="features-mosaic">
+      <div class="feature-mosaic-card large" style="background:linear-gradient(135deg,#0d1117,#1a1030)">
+        <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=70"
+             class="feature-card-img" alt="Studio"
+             onerror="this.style.display='none'"/>
+        <div class="feature-card-overlay"></div>
+        <div class="feature-card-body">
+          <div class="feature-icon-badge">🎵</div>
+          <div class="feature-card-title">Project Workspaces</div>
+          <div class="feature-card-desc">Create dedicated spaces with genre tags, status tracking, and full team visibility.</div>
+        </div>
       </div>
-      <div class="feature-card fade-in fade-in-delay-1">
-        <div class="feature-icon">🎚️</div>
-        <div class="feature-title">Track Management</div>
-        <div class="feature-desc">Upload vocals, beats, instrumentals, and mixed tracks with version control built in.</div>
+
+      {% for icon, title, desc, img in [
+        ('🎚️','Track Management','Upload vocals, beats, instrumentals with version control.','photo-1571330735066-03aaa9429d89'),
+        ('🤝','Real Collaboration','Invite singers, producers, musicians with defined roles.','photo-1493225457124-a3eb161ffa5f'),
+        ('⭐','Peer Reviews','Give and receive ratings and detailed feedback.','photo-1470225620780-dba8ba36b745'),
+        ('🎧','Smart Playlists','Curate your favourite tracks into named playlists.','photo-1514320291840-2e0a9bf2a9ae'),
+        ('🔒','Role-Based Access','Singer, Producer, Listener or Admin — right tools for each.','photo-1507838153414-b4b713384a76')
+      ] %}
+      <div class="feature-mosaic-card small">
+        <img src="https://images.unsplash.com/{{ img }}?w=400&q=60"
+             class="feature-card-img" alt="{{ title }}"
+             onerror="this.style.display='none'"/>
+        <div class="feature-card-overlay"></div>
+        <div class="feature-card-body">
+          <div class="feature-icon-badge sm">{{ icon }}</div>
+          <div class="feature-card-title sm">{{ title }}</div>
+          <div class="feature-card-desc sm">{{ desc }}</div>
+        </div>
       </div>
-      <div class="feature-card fade-in fade-in-delay-2">
-        <div class="feature-icon">🤝</div>
-        <div class="feature-title">Real Collaboration</div>
-        <div class="feature-desc">Invite singers, producers, and musicians to join your project with defined roles.</div>
-      </div>
-      <div class="feature-card fade-in fade-in-delay-3">
-        <div class="feature-icon">⭐</div>
-        <div class="feature-title">Peer Reviews</div>
-        <div class="feature-desc">Give and receive ratings and detailed feedback to help each other grow.</div>
-      </div>
-      <div class="feature-card fade-in fade-in-delay-4">
-        <div class="feature-icon">🎧</div>
-        <div class="feature-title">Smart Playlists</div>
-        <div class="feature-desc">Curate your favorite tracks into named playlists for any mood or occasion.</div>
-      </div>
-      <div class="feature-card fade-in" style="animation-delay:0.25s">
-        <div class="feature-icon">🔒</div>
-        <div class="feature-title">Role-Based Access</div>
-        <div class="feature-desc">Singer, Producer, Listener, or Admin — every user gets the right tools for their role.</div>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- CTA strip -->
-<section style="padding:80px 60px;text-align:center;background:var(--bg-base);border-top:1px solid var(--border)">
-  <h2 style="font-family:var(--font-display);font-size:42px;font-weight:800;letter-spacing:-1px;margin-bottom:16px">
-    Ready to make music?
-  </h2>
-  <p style="color:var(--text-secondary);font-size:18px;margin-bottom:36px">
-    Join thousands of musicians already collaborating on MusicCollab.
-  </p>
-  <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
-    Create Your Free Account
-  </a>
+<section class="cta-section">
+  <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=1400&q=70"
+       class="cta-bg-img" alt=""
+       onerror="this.style.display='none'"/>
+  <div class="cta-overlay"></div>
+  <div class="cta-content">
+    <h2 class="cta-headline">Ready to make music?</h2>
+    <p class="cta-sub">Join thousands of musicians already collaborating on MusicCollab.</p>
+    <a href="{{ url_for('register') }}" class="btn-hero-primary">
+      Create Your Free Account →
+    </a>
+  </div>
 </section>
 
-<footer style="padding:28px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;color:var(--text-muted);font-size:13px">
+<footer class="landing-footer">
   <div style="display:flex;align-items:center;gap:10px">
     <div class="logo-icon" style="width:28px;height:28px;font-size:14px">🎵</div>
     <span>MusicCollab © 2024</span>
   </div>
-  <div style="display:flex;gap:20px">
+  <div style="display:flex;gap:24px">
     <a href="{{ url_for('register') }}" style="color:var(--text-muted)">Sign Up</a>
-    <a href="{{ url_for('login') }}" style="color:var(--text-muted)">Log In</a>
+    <a href="{{ url_for('login') }}"    style="color:var(--text-muted)">Log In</a>
   </div>
 </footer>
 

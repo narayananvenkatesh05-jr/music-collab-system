@@ -5,28 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login — MusicCollab</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced.css') }}"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>"/>
 </head>
 <body>
 <div class="auth-page">
 
-  <!-- Left panel -->
+  <!-- Left panel with background image -->
   <div class="auth-panel-left">
-    <div class="auth-brand">
-      <div class="logo-icon" style="width:52px;height:52px;font-size:26px">🎵</div>
-      <div class="logo-text" style="font-size:22px">Music<span>Collab</span></div>
-    </div>
-    <div class="auth-tagline">
-      Welcome back.<br/>
-      Your music<br/>
-      <span>awaits you.</span>
-    </div>
+    <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=900&q=75"
+         class="auth-panel-left-bg" alt="Studio"
+         onerror="this.style.display='none'"/>
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(5,5,15,0.88),rgba(10,10,30,0.75))"></div>
 
-    <!-- Decorative waveform -->
-    <div style="margin-top:56px;display:flex;align-items:flex-end;gap:5px;height:60px;opacity:0.5">
-      {% for h in [20,35,50,42,55,28,60,45,38,52,30,48,20,35,50] %}
-      <div style="width:8px;border-radius:4px;background:var(--accent);height:{{ h }}px;opacity:0.7"></div>
-      {% endfor %}
+    <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center">
+      <div class="auth-brand">
+        <div class="logo-icon" style="width:52px;height:52px;font-size:26px;box-shadow:0 0 40px rgba(108,99,255,0.5)">🎵</div>
+        <div class="logo-text" style="font-size:22px;font-family:'Playfair Display',serif">
+          Music<span>Collab</span>
+        </div>
+      </div>
+
+      <div class="auth-tagline" style="font-family:'Playfair Display',serif">
+        Welcome back.<br/>
+        Your music<br/>
+        <span style="color:var(--accent)">awaits you.</span>
+      </div>
+
+      <!-- Animated waveform -->
+      <div class="waveform-container" style="margin-top:48px;justify-content:center">
+        {% for h in [12,20,32,28,40,35,45,38,42,50,44,36,28,22,30,40,48,43] %}
+        <div class="wbar" style="--h:{{ h }}px; animation-delay:{{ loop.index0 * 0.07 }}s"></div>
+        {% endfor %}
+      </div>
+
+      <!-- Artist avatars -->
+      <div style="display:flex;align-items:center;margin-top:40px">
+        {% for name, color in [('Alex R','6c63ff'),('Sam J','ff6584'),('Neha R','43e97b'),('Arjun M','ffa94d')] %}
+        <img src="https://ui-avatars.com/api/?name={{ name | replace(' ','+') }}&background={{ color }}&color=fff&size=36&bold=true&rounded=true"
+             style="width:36px;height:36px;border-radius:50%;border:2px solid var(--bg-surface);margin-left:-8px"
+             onerror="this.style.display='none'"/>
+        {% endfor %}
+        <span style="font-size:13px;color:rgba(255,255,255,0.5);margin-left:12px">
+          +500 artists joined
+        </span>
+      </div>
     </div>
   </div>
 
@@ -34,7 +57,9 @@
   <div class="auth-panel-right">
     <div class="auth-form-box">
 
-      <div class="auth-form-title">Sign in</div>
+      <div class="auth-form-title" style="font-family:'Playfair Display',serif">
+        Sign in
+      </div>
       <div class="auth-form-sub">Continue your musical journey.</div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -44,11 +69,10 @@
       {% endwith %}
 
       <form method="POST" action="{{ url_for('login') }}" data-validate>
-
         <div class="form-group">
           <label class="form-label" for="email">Email</label>
           <input class="form-control" type="email" id="email" name="email"
-                 placeholder="you@example.com" required autofocus />
+                 placeholder="you@example.com" required autofocus/>
           <div class="form-error"></div>
         </div>
 
@@ -58,33 +82,26 @@
             <input class="form-control" type="password" id="password" name="password"
                    placeholder="Your password" required style="padding-right:48px"/>
             <button type="button" id="pwd-toggle"
-                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted)"
-                    title="Show/hide password">👁️</button>
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted)">
+              👁️
+            </button>
           </div>
           <div class="form-error"></div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px">
+        <button type="submit" class="btn btn-primary btn-full"
+                style="margin-top:8px;border-radius:99px;padding:13px">
           Sign In →
         </button>
       </form>
 
-      <!-- Demo hint -->
-      <div style="margin-top:20px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;color:var(--text-muted)">
-        <div style="font-weight:600;color:var(--text-secondary);margin-bottom:6px">🧪 Demo accounts (after running seed SQL):</div>
-        <div>Producer: <code style="color:var(--accent)">alex@example.com</code></div>
-        <div>Singer: <code style="color:var(--accent)">sam@example.com</code></div>
-        <div style="margin-top:4px;font-style:italic">Passwords are hashed — create your own account.</div>
-      </div>
-
-      <div class="auth-footer-link">
+      <div class="auth-footer-link" style="margin-top:24px">
         New here? <a href="{{ url_for('register') }}">Create an account</a>
       </div>
     </div>
   </div>
 
 </div>
-
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 <script>
   const toggle = document.getElementById('pwd-toggle');

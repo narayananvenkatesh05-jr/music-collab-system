@@ -3,6 +3,31 @@
 {% block topbar_title %}Dashboard{% endblock %}
 
 {% block content %}
+
+{% set genre_imgs = {
+  'Electronic': 'photo-1571330735066-03aaa9429d89',
+  'R&B': 'photo-1493225457124-a3eb161ffa5f',
+  'Lo-fi': 'photo-1470225620780-dba8ba36b745',
+  'Pop': 'photo-1514320291840-2e0a9bf2a9ae',
+  'Hip-Hop': 'photo-1547745329-d4b96e0d5ca0',
+  'Jazz': 'photo-1415201364774-f6f0bb35f28f',
+  'Rock': 'photo-1498038432885-c6f3f1b912ee',
+  'Classical': 'photo-1507838153414-b4b713384a76',
+  'Folk': 'photo-1511671782779-c97d3d27a1d4'
+} %}
+
+<!-- Dashboard hero banner with background image -->
+<div class="dashboard-hero">
+  <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200&q=70"
+       class="dashboard-hero-img" alt="Concert"
+       onerror="this.style.display='none'"/>
+  <div class="dashboard-hero-overlay"></div>
+  <div class="dashboard-hero-content">
+    <div class="dashboard-hello">Welcome back 👋</div>
+    <div class="dashboard-name">{{ current_user.name }}</div>
+  </div>
+</div>
+
 <!-- Stats strip -->
 <div class="stats-strip">
   <div class="stat-card fade-in">
@@ -47,15 +72,17 @@
 {% if my_projects %}
 <div class="grid-3" style="margin-bottom:40px">
   {% for p in my_projects %}
-  <a href="{{ url_for('project_detail', project_id=p.project_id) }}" style="display:block;text-decoration:none">
+  <a href="{{ url_for('project_detail', project_id=p.project_id) }}"
+     style="display:block;text-decoration:none">
     <div class="project-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
-      <div class="project-card-art" style="background:linear-gradient(135deg,
-        {% set colors = [
-          '#6c63ff,#ff6584','#43e97b,#38f9d7','#fa709a,#fee140',
-          '#4facfe,#00f2fe','#f093fb,#f5576c','#5f72be,#9921e8'
-        ] %}
-        {{ colors[loop.index0 % colors|length] }})">
-        <span class="art-icon">🎵</span>
+      <div class="project-card-art" style="height:140px">
+        {% set photo = genre_imgs.get(p.genre, 'photo-1511671782779-c97d3d27a1d4') %}
+        <img src="https://images.unsplash.com/{{ photo }}?w=400&q=65"
+             class="project-card-art-img" alt="{{ p.genre }}"
+             onerror="this.style.display='none'"/>
+        {% set colors = ['#6c63ff,#ff6584','#43e97b,#38f9d7','#fa709a,#fee140','#4facfe,#00f2fe','#f093fb,#f5576c','#5f72be,#9921e8'] %}
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,{{ colors[loop.index0 % colors|length] }});opacity:0.5"></div>
+        <span class="art-icon" style="position:relative;z-index:1">🎵</span>
         {% if p.genre %}<span class="genre-tag">{{ p.genre }}</span>{% endif %}
       </div>
       <div class="project-card-body">
@@ -76,7 +103,9 @@
   <div class="empty-icon">🎵</div>
   <div class="empty-title">No projects yet</div>
   <div class="empty-desc">Create your first music project to get started.</div>
-  <a href="{{ url_for('create_project') }}" class="btn btn-primary" style="margin-top:20px">Create Project</a>
+  <a href="{{ url_for('create_project') }}" class="btn btn-primary" style="margin-top:20px">
+    Create Project
+  </a>
 </div>
 {% endif %}
 
@@ -84,7 +113,7 @@
 <div class="section-header">
   <div>
     <div class="section-title">Collaborations</div>
-    <div class="section-subtitle">Projects you're contributing to</div>
+    <div class="section-subtitle">Projects you are contributing to</div>
   </div>
   <a href="{{ url_for('collaborate') }}" class="btn btn-ghost btn-sm">Browse Projects</a>
 </div>
@@ -92,17 +121,28 @@
 {% if collab_projects %}
 <div class="grid-3" style="margin-bottom:40px">
   {% for p in collab_projects %}
-  <a href="{{ url_for('project_detail', project_id=p.project_id) }}" style="display:block;text-decoration:none">
+  <a href="{{ url_for('project_detail', project_id=p.project_id) }}"
+     style="display:block;text-decoration:none">
     <div class="project-card fade-in" style="animation-delay:{{ loop.index0 * 0.05 }}s">
-      <div class="project-card-art" style="background:linear-gradient(135deg,#fa709a,#fee140)">
-        <span class="art-icon">🤝</span>
+      <div class="project-card-art" style="height:140px">
+        {% set photo = genre_imgs.get(p.genre, 'photo-1493225457124-a3eb161ffa5f') %}
+        <img src="https://images.unsplash.com/{{ photo }}?w=400&q=65"
+             class="project-card-art-img" alt="{{ p.genre }}"
+             onerror="this.style.display='none'"/>
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,#fa709a,#fee140);opacity:0.5"></div>
+        <span class="art-icon" style="position:relative;z-index:1">🤝</span>
         {% if p.genre %}<span class="genre-tag">{{ p.genre }}</span>{% endif %}
       </div>
       <div class="project-card-body">
         <div class="project-card-title">{{ p.title }}</div>
         <div class="project-card-meta">
-          <span>👤 {{ p.creator_name }}</span>
-          <span>🎭 {{ p.role_in_project or 'Collaborator' }}</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <img src="https://ui-avatars.com/api/?name={{ p.creator_name | urlencode }}&background=6c63ff&color=fff&size=20&bold=true&rounded=true"
+                 style="width:20px;height:20px;border-radius:50%"
+                 onerror="this.style.display='none'"/>
+            {{ p.creator_name }}
+          </span>
+          <span class="badge badge-gray">{{ p.role_in_project or 'Collaborator' }}</span>
         </div>
       </div>
     </div>
@@ -114,11 +154,13 @@
   <div class="empty-icon">🤝</div>
   <div class="empty-title">Not collaborating yet</div>
   <div class="empty-desc">Join an existing project and contribute your skills.</div>
-  <a href="{{ url_for('collaborate') }}" class="btn btn-outline" style="margin-top:20px">Find Projects</a>
+  <a href="{{ url_for('collaborate') }}" class="btn btn-outline" style="margin-top:20px">
+    Find Projects
+  </a>
 </div>
 {% endif %}
 
-<!-- Recent Tracks + Quick Upload -->
+<!-- Recent Tracks + Playlists -->
 <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start">
   <div>
     <div class="section-header">
@@ -136,16 +178,29 @@
            style="animation-delay:{{ loop.index0 * 0.04 }}s">
         <div class="track-num">{{ loop.index }}</div>
         <button class="track-play-btn" type="button">▶</button>
-        <div class="track-thumb">🎵</div>
+        <div class="track-thumb">
+          {% if t.track_type == 'VOCALS' %}🎤
+          {% elif t.track_type == 'BEAT' %}🥁
+          {% elif t.track_type == 'INSTRUMENTAL' %}🎸
+          {% elif t.track_type == 'MIXED' %}🎛️
+          {% else %}🎵{% endif %}
+        </div>
         <div class="track-info">
           <div class="track-name">{{ t.file_url.split('/')[-1] }}</div>
-          <div class="track-meta">{{ t.project_title }} · {{ t.uploader_name }}</div>
+          <div class="track-meta" style="display:flex;align-items:center;gap:6px">
+            <img src="https://ui-avatars.com/api/?name={{ t.uploader_name | urlencode }}&background=ff6584&color=fff&size=16&bold=true&rounded=true"
+                 style="width:16px;height:16px;border-radius:50%;flex-shrink:0"
+                 onerror="this.style.display='none'"/>
+            {{ t.project_title }} · {{ t.uploader_name }}
+          </div>
         </div>
         <div class="track-type">
           <span class="badge badge-purple">{{ t.track_type }}</span>
         </div>
         <div class="track-duration">
-          {% if t.duration %}{{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}{% else %}—{% endif %}
+          {% if t.duration %}
+            {{ t.duration // 60 }}:{{ '%02d' % (t.duration % 60) }}
+          {% else %}—{% endif %}
         </div>
       </div>
       {% endfor %}
@@ -165,15 +220,34 @@
       <div class="section-title">My Playlists</div>
       <a href="{{ url_for('playlists') }}" class="btn btn-ghost btn-sm">View All</a>
     </div>
+
+    {% set pl_imgs = [
+      'photo-1511671782779-c97d3d27a1d4',
+      'photo-1471478331149-d6562bd11f96',
+      'photo-1459749411175-04bf5292ceea',
+      'photo-1485579149621-3123dd979885',
+      'photo-1487180144351-b8472da7d491'
+    ] %}
+
     {% if playlists %}
     <div style="display:flex;flex-direction:column;gap:12px">
       {% for pl in playlists %}
-      <div class="card fade-in" style="animation-delay:{{ loop.index0 * 0.06 }}s;cursor:pointer">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎧</div>
+      <div class="card fade-in"
+           style="animation-delay:{{ loop.index0 * 0.06 }}s;cursor:pointer;padding:14px;overflow:hidden;position:relative">
+        <img src="https://images.unsplash.com/{{ pl_imgs[loop.index0 % pl_imgs|length] }}?w=300&q=50"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.08"
+             onerror="this.style.display='none'"/>
+        <div style="display:flex;align-items:center;gap:12px;position:relative;z-index:1">
+          <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+            🎧
+          </div>
           <div style="min-width:0">
-            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pl.name }}</div>
-            <div style="font-size:12px;color:var(--text-muted)">{{ pl.description or 'No description' }}</div>
+            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              {{ pl.name }}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted)">
+              {{ pl.description or 'No description' }}
+            </div>
           </div>
         </div>
       </div>
@@ -183,7 +257,9 @@
     <div class="empty-state" style="padding:32px 20px">
       <div class="empty-icon">🎧</div>
       <div class="empty-title">No playlists yet</div>
-      <a href="{{ url_for('playlists') }}" class="btn btn-outline btn-sm" style="margin-top:12px">Create Playlist</a>
+      <a href="{{ url_for('playlists') }}" class="btn btn-outline btn-sm" style="margin-top:12px">
+        Create Playlist
+      </a>
     </div>
     {% endif %}
   </div>
